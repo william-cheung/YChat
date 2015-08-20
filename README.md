@@ -1,2 +1,2 @@
 # YChat
-[pic]: https://github.com/williamcheungthu/YChat/blob/master/YChat.png
+<img src="https://github.com/williamcheungthu/YChat/blob/master/YChat.png">
