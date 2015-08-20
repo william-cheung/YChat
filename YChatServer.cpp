@@ -34,7 +34,6 @@ void on_exit() {
 	printf("\nexiting ...\n");
 	if (pmanager != NULL) pmanager->releaseResources();
 	pmanager = NULL;
-	printf("\nreach here !!!\n");
 }
 
 void sig_handler(int sig) {

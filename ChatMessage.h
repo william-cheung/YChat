@@ -8,8 +8,8 @@
 
 namespace YChat {
 	class ChatMessage : public GNET::Protocol {
-
-		typedef std::string 				user_info_t;
+		
+		typedef std::string 	user_info_t;
 
 		Protocol* Clone() const { return new ChatMessage(*this); }
 		

@@ -20,8 +20,9 @@ using 	CDB::DbException;
 #error "adjust your defines !"
 #endif
 
-typedef StorageEnv::Storage			Storage;
-typedef StorageEnv::Transaction		Transaction;
+typedef StorageEnv::Storage         Storage;
+typedef StorageEnv::Storage         Storage;
+typedef StorageEnv::Transaction     Transaction;
 
 namespace YChat {
 	using namespace std;
@@ -89,7 +90,7 @@ namespace YChat {
 		return string(ex.what()) == "NOTFOUND";
 	}
 
-    static uid_t get_curr_max_uid(Storage* pstorage, Transaction& txn) {
+	static uid_t get_curr_max_uid(Storage* pstorage, Transaction& txn) {
 		uid_t uid = 0;
 		try {
 			OctetsStream os; os << curr_max_uid_key;
