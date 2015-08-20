@@ -65,17 +65,17 @@ void (*my_signal(int signo, void (*func)(int)))(int) {
 //-------------------------------------------------------------------------------------------------
 
 
-void 	run_ui					(int argc, char* argv[]);
-void	login					(const string& username);
-int	do_login				(const string& username, const string& password);
-void 	regst					(void);
-int	do_regst				(const string& username, const string& password);
-void	step_into_main_ui			(void);
-void 	start_command_loop			(void); 
-int 	parse_and_exec_cmd			(const string& command); 
-bool 	exec					(const string& command, const vector<string>& params); 
+void 	run_ui				(int argc, char* argv[]);
+void	login				(const string& username);
+int	do_login			(const string& username, const string& password);
+void 	regst				(void);
+int	do_regst			(const string& username, const string& password);
+void	step_into_main_ui		(void);
+void 	start_command_loop		(void); 
+int 	parse_and_exec_cmd		(const string& command); 
+bool 	exec				(const string& command, const vector<string>& params); 
 
-void	start_chat_mode				(const string& username);
+void	start_chat_mode			(const string& username);
 
 //-------------------------------------------------------------------------------------------------
 
