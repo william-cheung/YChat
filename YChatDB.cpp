@@ -20,7 +20,7 @@ using 	CDB::DbException;
 #error "adjust your defines !"
 #endif
 
-typedef StorageEnv::Storage			Storage;
+typedef StorageEnv::Storage		Storage;
 typedef StorageEnv::Transaction		Transaction;
 
 namespace YChat {
