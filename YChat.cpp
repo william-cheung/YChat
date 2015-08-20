@@ -65,15 +65,15 @@ void (*my_signal(int signo, void (*func)(int)))(int) {
 //-------------------------------------------------------------------------------------------------
 
 
-void 	run_ui						(int argc, char* argv[]);
-void	login						(const string& username);
-int		do_login					(const string& username, const string& password);
-void 	regst						(void);
-int		do_regst					(const string& username, const string& password);
+void 	run_ui					(int argc, char* argv[]);
+void	login					(const string& username);
+int	do_login				(const string& username, const string& password);
+void 	regst					(void);
+int	do_regst				(const string& username, const string& password);
 void	step_into_main_ui			(void);
 void 	start_command_loop			(void); 
 int 	parse_and_exec_cmd			(const string& command); 
-bool 	exec						(const string& command, const vector<string>& params); 
+bool 	exec					(const string& command, const vector<string>& params); 
 
 void	start_chat_mode				(const string& username);
 
@@ -353,10 +353,10 @@ int parse_and_exec_cmd(const string& command) {
 
 // ------------------------------------------------------------------------------------------------------
 
-void 	chat_with					(const vector<string>&); 
+void 	chat_with				(const vector<string>&); 
 void	list_all_friends			(const vector<string>&);
-void 	add_friend					(const vector<string>&);
-void	del_friend					(const vector<string>&);
+void 	add_friend				(const vector<string>&);
+void	del_friend				(const vector<string>&);
 void	list_all_frndreqs			(const vector<string>&);
 void	accept_frndreq				(const vector<string>&);
 void 	leave_message				(const vector<string>&);
@@ -383,17 +383,17 @@ struct internal_command {
 };
 
 struct internal_command inter_cmds[] = {
-	{"chatwith", 	1, {{"", 	chat_with,			1, 		"chatwith USERNAME         \tstart chating with USERNAME"}}},
-	{"friend",		5, {{"all", list_all_friends,	0, 		"friend   all              \tlist all your friends"}, 
-						{"add", add_friend,			1, 		"         add USERNAME     \tsend a friend-adding request to USERNAME"},
-					   	{"del", del_friend,			1,		"         del USERNAME     \tdelete USERNAME from your friend list"},
-					    {"req", list_all_frndreqs,  0,		"         req              \tlist all friend-adding requests"},
-					    {"acc", accept_frndreq,     1,      "         acc UESRNAME     \taccept friend-adding request from USERNAME"}}},
-	{"leavmsg",		1, {{"",	leave_message,		2,		"leavmsg  USERNAME MESSAGE \tleave USERNAME a message; e.g. leavmsg alice \"hello, alice\""}}},
-	{"message",		2, {{"all",	list_all_messages,	0,		"message  all              \tlist all messages sent to you using \'leavmsg\' command"},
-					    {"clr",	clear_messages,		0,		"         clr              \tclear messages sent to you"}}},
-	{"help",		1, {{"", 	display_help,		0, 		"help                      \tdisplay this help"}}},
-	{"exit",		1, {{"",	NULL,				0,      "exit                      \texit YChat"}}},
+	{"chatwith", 	1, 	{{"", 		chat_with,		1, 	"chatwith USERNAME         \tstart chating with USERNAME"}}},
+	{"friend",	5, 	{{"all", 	list_all_friends,	0, 	"friend   all              \tlist all your friends"}, 
+				 {"add", 	add_friend,		1, 	"         add USERNAME     \tsend a friend-adding request to USERNAME"},
+				 {"del", 	del_friend,		1,	"         del USERNAME     \tdelete USERNAME from your friend list"},
+				 {"req", 	list_all_frndreqs,  	0,	"         req              \tlist all friend-adding requests"},
+				 {"acc", 	accept_frndreq,     	1,      "         acc UESRNAME     \taccept friend-adding request from USERNAME"}}},
+	{"leavmsg",	1, 	{{"",		leave_message,		2,	"leavmsg  USERNAME MESSAGE \tleave USERNAME a message; e.g. leavmsg alice \"hello, alice\""}}},
+	{"message",	2, 	{{"all",	list_all_messages,	0,	"message  all              \tlist all messages sent to you using \'leavmsg\' command"},
+				 {"clr",	clear_messages,		0,	"         clr              \tclear messages sent to you"}}},
+	{"help",	1, 	{{"", 		display_help,		0, 	"help                      \tdisplay this help"}}},
+	{"exit",	1, 	{{"",		NULL,			0,      "exit                      \texit YChat"}}},
 };
 
 bool exec(const string& cmd, const vector<string>& params) {
