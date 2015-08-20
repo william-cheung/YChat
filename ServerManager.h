@@ -21,8 +21,8 @@ namespace YChat {
 
 		typedef std::map<std::string, sid_t> 	SessionMap;
 		typedef std::map<sid_t, std::string> 	UserNameMap;
-		typedef std::map<sid_t, int>		 	ChatRequestStateMap;
-		typedef std::map<sid_t, sid_t>			ChatPairMap;
+		typedef std::map<sid_t, int>		ChatRequestStateMap;
+		typedef std::map<sid_t, sid_t>		ChatPairMap;
 
 		std::string identification;
 
