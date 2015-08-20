@@ -151,8 +151,8 @@ void run_ui(int argc, char* argv[]) {
 	int opt = getopt_long(argc, argv, "hl:r", options, NULL);
 	if (opt != -1 && opt != ':' && optind == argc) {
 		switch (opt) {
-		case 'l':	login(optarg); 	break; 
-		case 'r':	regst();		break;
+		case 'l':	login(optarg);  break; 
+		case 'r':	regst();        break;
 		default: 	print_usage();  
 		}
 	} else print_usage();
@@ -352,10 +352,10 @@ int parse_and_exec_cmd(const string& command) {
 
 // ------------------------------------------------------------------------------------------------------
 
-void 	chat_with					(const vector<string>&); 
+void 	chat_with				(const vector<string>&); 
 void	list_all_friends			(const vector<string>&);
-void 	add_friend					(const vector<string>&);
-void	del_friend					(const vector<string>&);
+void 	add_friend				(const vector<string>&);
+void	del_friend				(const vector<string>&);
 void 	chat_with				(const vector<string>&); 
 void	list_all_friends			(const vector<string>&);
 void 	add_friend				(const vector<string>&);
@@ -386,17 +386,6 @@ struct internal_command {
 };
 
 struct internal_command inter_cmds[] = {
-	{"chatwith", 	1, {{"", 	chat_with,			1, 		"chatwith USERNAME         \tstart chating with USERNAME"}}},
-	{"friend",		5, {{"all", list_all_friends,	0, 		"friend   all              \tlist all your friends"}, 
-						{"add", add_friend,			1, 		"         add USERNAME     \tsend a friend-adding request to USERNAME"},
-					   	{"del", del_friend,			1,		"         del USERNAME     \tdelete USERNAME from your friend list"},
-					    {"req", list_all_frndreqs,  0,		"         req              \tlist all friend-adding requests"},
-					    {"acc", accept_frndreq,     1,      "         acc UESRNAME     \taccept friend-adding request from USERNAME"}}},
-	{"leavmsg",		1, {{"",	leave_message,		2,		"leavmsg  USERNAME MESSAGE \tleave USERNAME a message; e.g. leavmsg alice \"hello, alice\""}}},
-	{"message",		2, {{"all",	list_all_messages,	0,		"message  all              \tlist all messages sent to you using \'leavmsg\' command"},
-					    {"clr",	clear_messages,		0,		"         clr              \tclear messages sent to you"}}},
-	{"help",		1, {{"", 	display_help,		0, 		"help                      \tdisplay this help"}}},
-	{"exit",		1, {{"",	NULL,				0,      "exit                      \texit YChat"}}},
 	{"chatwith", 	1, 	{{"", 		chat_with,		1, 	"chatwith USERNAME         \tstart chating with USERNAME"}}},
 	{"friend",	5, 	{{"all", 	list_all_friends,	0, 	"friend   all              \tlist all your friends"}, 
 				 {"add", 	add_friend,		1, 	"         add USERNAME     \tsend a friend-adding request to USERNAME"},
