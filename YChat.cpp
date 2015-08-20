@@ -21,11 +21,11 @@ using namespace YChat;
 
 //-------------------------------------------------------------------------------------------------
 
-#define terminate()  kill(getpid(), SIGINT)
+#define terminate()  	kill(getpid(), SIGINT)
 
 #define display_lf() 	(cout << endl << flush)
 
-#define display_message(message) \
+#define display_message(message) \ 
 	do { cout << (message) << flush; } while (0)
 
 #define display_lf_message(message) \
