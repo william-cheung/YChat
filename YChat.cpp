@@ -254,7 +254,7 @@ void regst() {
 retry_password:
 		display_message("Password : ");
 		if (!get_password(password)) {
-			display_message_lf_lf(warnning_invalchar_in_password);
+			display_message_lf(warnning_invalchar_in_password);
 			goto retry_password;
 		} else if (password == "") {
 			display_message_lf("the password cannot be blank !");
