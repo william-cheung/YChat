@@ -31,15 +31,13 @@ void (*my_signal(int signo, void (*func)(int)))(int) {
 static ServerManager* pmanager = NULL;
 
 void on_exit() {
-	printf("\nexiting ...\n");
+	//printf("\nexiting ...\n");
 	if (pmanager != NULL) pmanager->releaseResources();
 	pmanager = NULL;
 }
 
 void sig_handler(int sig) {
-	on_exit();
-	sleep(3);
-	terminate();
+	kill(getpid(), SIGUSR1);  // according to thread.h (& thread.cpp)
 }
 
 int main() {

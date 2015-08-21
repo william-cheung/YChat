@@ -51,7 +51,7 @@ namespace YChat {
 
 	YChatDB::~YChatDB() {
 		StorageEnv::checkpoint();
-		StorageEnv::Close();
+		// StorageEnv::Close();  // unknown error here !
 	}
 	
 	bool YChatDB::sync() {
