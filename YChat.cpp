@@ -254,7 +254,7 @@ void regst() {
 retry_password:
 		display_message("Password : ");
 		if (!get_password(password)) {
-			display_message_lf_lf(warnning_invalchar_in_password);
+			display_message_lf(warnning_invalchar_in_password);
 			goto retry_password;
 		} else if (password == "") {
 			display_message_lf("the password cannot be blank !");
@@ -352,10 +352,6 @@ int parse_and_exec_cmd(const string& command) {
 
 // ------------------------------------------------------------------------------------------------------
 
-void 	chat_with				(const vector<string>&); 
-void	list_all_friends			(const vector<string>&);
-void 	add_friend				(const vector<string>&);
-void	del_friend				(const vector<string>&);
 void 	chat_with				(const vector<string>&); 
 void	list_all_friends			(const vector<string>&);
 void 	add_friend				(const vector<string>&);
