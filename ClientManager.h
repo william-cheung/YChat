@@ -28,34 +28,26 @@ namespace YChat {
 		sid_t curr_sid;
 		uid_t curr_uid;
 
-		struct StateBase {
-			Mutex mutex;
+		struct State {
+			Mutex mutex;		
 			Condition cond;
-		};
-
-		struct State : StateBase {
-			int status;
-		};
-
-		struct StateWithData : StateBase {
 			Octets octets;
 		};
 
 		State	login_state;
 		State	regst_state;
 
+		State	frnd_lst_state;  
 		State 	frnd_add_state;
 		State 	frnd_del_state;
+		State	frnd_req_state;
 		State	frnd_acc_state;
 
 		State	chat_with_state;
 
 		State 	leav_msg_state;
+		State	lmsg_lst_state;
 		State 	lmsg_clr_state;
-
-		StateWithData frnd_lst_state;
-		StateWithData frnd_req_state;
-		StateWithData lmsg_lst_state; 
 
 		OnChatRequestListener*      p_chat_request_listener;
 		Mutex message_receive_listener_mutex;
@@ -67,9 +59,9 @@ namespace YChat {
 			: identification(id_str), curr_sid(0), curr_uid(0),
 			p_chat_request_listener(NULL), p_message_receive_listener(NULL) { }
 
-		enum { YCHAT_TIMED_OUT = 1024, YCHAT_NET_ERROR, };
+		enum { YCHAT_TIMED_OUT = 1024, YCHAT_NET_ERROR, };  // private status codes start from 1024  
 
-	private:
+	private:  // functions in this section are utility functions
 		void sendControlProtocol(sid_t sid, const std::string& method, const Octets& content) {
 			ControlProtocol* control_message = (ControlProtocol*) Protocol::Create(PROTOCOL_CONTROL);
 			control_message->setup(method, content);
@@ -77,18 +69,24 @@ namespace YChat {
 			control_message->Destroy();
 		}
 
+        int extractStatus(const Octets& octets) const {
+			OctetsStream stream(octets);
+			int status; stream >> status;
+			return status;
+		}
+
 		int onRequest(const std::string& method, const Octets& content, State& state, int timeout) {
 			if (curr_sid == 0) return YCHAT_NET_ERROR;
 			Mutex::Scoped mutex_scoped(state.mutex);
 			sendControlProtocol(curr_sid, method, content);
 			if (state.cond.TimedWait(state.mutex, timeout) != ETIMEDOUT) {
-				return state.status;
+				return extractStatus(state.octets);
 			}
 			return YCHAT_TIMED_OUT;
 		}
 
 		template <class Entity>
-		int onRequest(const std::string& method, StateWithData& state, int timeout, 
+		int onRequest(const std::string& method, State& state, int timeout, 
 				std::vector<Entity>& entities) {
 			if (curr_sid == 0) return YCHAT_NET_ERROR;
 			Mutex::Scoped mutex_scoped(state.mutex);
@@ -113,26 +111,12 @@ namespace YChat {
 			return YCHAT_TIMED_OUT;
 		}
 
-		void onRespond(sid_t sid, int status, State& state) {
+		void onRespond(sid_t sid, const Octets& data, State& state) {
 			{
 				Mutex::Scoped mtx(state.mutex);
-				state.status = status;
-			}
-			state.cond.NotifyOne();	
-		}
-
-		void onRespond(sid_t sid, const Octets& octets, StateWithData& state) {
-			{
-				Mutex::Scoped mtx(state.mutex);
-				state.octets = octets;
+				state.octets = data;
 			}
 			state.cond.NotifyOne();
-		}
-
-		int extractStatus(const Octets& octets) const {
-			OctetsStream stream(octets);
-			int status; stream >> status;
-			return status;
 		}
 
 	public:
@@ -144,7 +128,7 @@ namespace YChat {
 		}
 	
 		void onLoginRespond(sid_t sid, const Octets& data) {
-			onRespond(sid, extractStatus(data), login_state);
+			onRespond(sid, data, login_state);
 		}	
 
 		int regst(const std::string& username, const std::string& password) {
@@ -154,7 +138,7 @@ namespace YChat {
 		}
 
 		void onRegstRespond(sid_t sid, const Octets& data) {
-			onRespond(sid, extractStatus(data), regst_state);
+			onRespond(sid, data, regst_state);
 		}
 
 		int getFriendList(std::vector<User>& friends) {
@@ -171,7 +155,7 @@ namespace YChat {
 		}
 
 		void onAddFriendRespond(sid_t sid, const Octets& data) {
-			onRespond(sid, extractStatus(data), frnd_add_state);
+			onRespond(sid, data, frnd_add_state);
 		}
 
 		int delFriend(const std::string& username) {
@@ -180,7 +164,7 @@ namespace YChat {
 		}
 
 		void onDelFriendRespond(sid_t sid, const Octets& data) {
-			onRespond(sid, extractStatus(data), frnd_del_state);
+			onRespond(sid, data, frnd_del_state);
 		}
 
 		int getFrndreqList(std::vector<FriendRequest>& requests) {
@@ -197,7 +181,7 @@ namespace YChat {
 		}
 
 		void onAccFrndreqRespond(sid_t sid, const Octets& data) {
-			onRespond(sid, extractStatus(data), frnd_acc_state);
+			onRespond(sid, data, frnd_acc_state);
 		}
 
 		int getMessageList(std::vector<Message>& messages) {
@@ -214,7 +198,7 @@ namespace YChat {
 		}
 
 		void onLeaveMessageRespond(sid_t sid, const Octets& data) {
-			onRespond(sid, extractStatus(data), leav_msg_state);
+			onRespond(sid, data, leav_msg_state);
 		}
 
 		int clearMessages() {
@@ -223,7 +207,7 @@ namespace YChat {
 		}
 
 		void onClearMessagesRespond(sid_t sid, const Octets& data) {
-			onRespond(sid, extractStatus(data), lmsg_clr_state);
+			onRespond(sid, data, lmsg_clr_state);
 		}
 
 		int chatWith(const std::string& username) {
@@ -237,7 +221,7 @@ namespace YChat {
 			sendControlProtocol(curr_sid, CPMETHOD_CHAT_WITH, user_stream);	
 
 			if (chat_with_state.cond.TimedWait(chat_with_state.mutex, 60) != ETIMEDOUT)
-				return chat_with_state.status;
+				return extractStatus(chat_with_state.octets);
 
 			sendControlProtocol(curr_sid, CPMETHOD_CHAT_FAIL, user_stream);
 			return YCHAT_REQ_FAILED;
@@ -245,7 +229,7 @@ namespace YChat {
 
 
 		void onChatWithRespond(sid_t sid, const Octets& data) {
-			onRespond(sid, extractStatus(data), chat_with_state);
+			onRespond(sid, data, chat_with_state);
 		}
 
 		void setOnChatRequestListener(OnChatRequestListener* plistener) {
@@ -330,7 +314,7 @@ namespace YChat {
 		public:
 			void onProtocolProcess(Manager* pmanager, sid_t sid, Protocol* pprotocol) {
 				typedef ClientManager CM;
-				/** list below are aligned using SPACE **/
+				/** the list below is aligned using SPACE **/
 				static struct s_response_handler response_handlers[] = {
 					{CPMETHOD_LOGIN,        &CM::onLoginRespond          },
 					{CPMETHOD_REGST,        &CM::onRegstRespond          },
