@@ -129,6 +129,12 @@ namespace YChat {
 			state.cond.NotifyOne();
 		}
 
+		int extractStatus(const Octets& octets) const {
+			OctetsStream stream(octets);
+			int status; stream >> status;
+			return status;
+		}
+
 	public:
 		
 		int login(const std::string& username, const std::string& password) {
@@ -137,8 +143,8 @@ namespace YChat {
 			return onRequest(CPMETHOD_LOGIN, login_stream, login_state, DEFAULT_TIMEOUT);
 		}
 	
-		void onLoginRespond(sid_t sid, int status) {
-			onRespond(sid, status, login_state);
+		void onLoginRespond(sid_t sid, const Octets& data) {
+			onRespond(sid, extractStatus(data), login_state);
 		}	
 
 		int regst(const std::string& username, const std::string& password) {
@@ -147,16 +153,16 @@ namespace YChat {
 			return onRequest(CPMETHOD_REGST, regst_stream, regst_state, DEFAULT_TIMEOUT);
 		}
 
-		void onRegstRespond(sid_t sid, int status) {
-			onRespond(sid, status, regst_state);
+		void onRegstRespond(sid_t sid, const Octets& data) {
+			onRespond(sid, extractStatus(data), regst_state);
 		}
 
 		int getFriendList(std::vector<User>& friends) {
 			return onRequest(CPMETHOD_FRND_LST, frnd_lst_state, DEFAULT_TIMEOUT, friends);
 		}
 
-		void onRecvFriendList(sid_t sid, const Octets& content) {
-			onRespond(sid, content, frnd_lst_state);
+		void onRcvFriendList(sid_t sid, const Octets& data) {
+			onRespond(sid, data, frnd_lst_state);
 		}
 
 		int addFriend(const std::string& username) {
@@ -164,8 +170,8 @@ namespace YChat {
 			return onRequest(CPMETHOD_FRND_ADD, stream, frnd_add_state, DEFAULT_TIMEOUT);
 		}
 
-		void onAddFriendRespond(sid_t sid, int status) {
-			onRespond(sid, status, frnd_add_state);
+		void onAddFriendRespond(sid_t sid, const Octets& data) {
+			onRespond(sid, extractStatus(data), frnd_add_state);
 		}
 
 		int delFriend(const std::string& username) {
@@ -173,16 +179,16 @@ namespace YChat {
 			return onRequest(CPMETHOD_FRND_DEL, stream, frnd_del_state, DEFAULT_TIMEOUT);
 		}
 
-		void onDelFriendRespond(sid_t sid, int status) {
-			onRespond(sid, status, frnd_del_state);
+		void onDelFriendRespond(sid_t sid, const Octets& data) {
+			onRespond(sid, extractStatus(data), frnd_del_state);
 		}
 
 		int getFrndreqList(std::vector<FriendRequest>& requests) {
 			return onRequest(CPMETHOD_FRND_REQ, frnd_req_state, DEFAULT_TIMEOUT, requests);
 		}
 
-		void onRecvFrndreqList(sid_t sid, const Octets& content) {
-			onRespond(sid, content, frnd_req_state);
+		void onRcvFrndreqList(sid_t sid, const Octets& data) {
+			onRespond(sid, data, frnd_req_state);
 		}
 
 		int acceptFrndreq(const std::string username) {
@@ -190,16 +196,16 @@ namespace YChat {
 			return onRequest(CPMETHOD_FRND_ACC, stream, frnd_acc_state, DEFAULT_TIMEOUT);
 		}
 
-		void onAccFrndreqRespond(sid_t sid, int status) {
-			onRespond(sid, status, frnd_acc_state);
+		void onAccFrndreqRespond(sid_t sid, const Octets& data) {
+			onRespond(sid, extractStatus(data), frnd_acc_state);
 		}
 
 		int getMessageList(std::vector<Message>& messages) {
 			return onRequest(CPMETHOD_LMSG_LST, lmsg_lst_state, DEFAULT_TIMEOUT, messages);
 		}
 
-		void onRecvMessageList(sid_t sid, const Octets& content) {
-			onRespond(sid, content, lmsg_lst_state);
+		void onRcvMessageList(sid_t sid, const Octets& data) {
+			onRespond(sid, data, lmsg_lst_state);
 		}
 
 		int leaveMessage(const std::string& username, const std::string& message) {
@@ -207,8 +213,8 @@ namespace YChat {
 			return onRequest(CPMETHOD_LEAV_MSG, stream, leav_msg_state, DEFAULT_TIMEOUT);
 		}
 
-		void onLeaveMessageRespond(sid_t sid, int status) {
-			onRespond(sid, status, leav_msg_state);
+		void onLeaveMessageRespond(sid_t sid, const Octets& data) {
+			onRespond(sid, extractStatus(data), leav_msg_state);
 		}
 
 		int clearMessages() {
@@ -216,8 +222,8 @@ namespace YChat {
 			return onRequest(CPMETHOD_LMSG_CLR, dummy_stream, lmsg_clr_state, DEFAULT_TIMEOUT);
 		}
 
-		void onClearMessagesRespond(sid_t sid, int status) {
-			onRespond(sid, status, lmsg_clr_state);
+		void onClearMessagesRespond(sid_t sid, const Octets& data) {
+			onRespond(sid, extractStatus(data), lmsg_clr_state);
 		}
 
 		int chatWith(const std::string& username) {
@@ -238,15 +244,17 @@ namespace YChat {
 		}
 
 
-		void onChatWithRespond(sid_t sid, int status) {
-			onRespond(sid, status, chat_with_state);
+		void onChatWithRespond(sid_t sid, const Octets& data) {
+			onRespond(sid, extractStatus(data), chat_with_state);
 		}
 
 		void setOnChatRequestListener(OnChatRequestListener* plistener) {
 			p_chat_request_listener = plistener;
 		}
 
-		void onChatRequest(sid_t sid, const std::string& username) {
+		void onChatRequest(sid_t sid, const Octets& data) {
+			OctetsStream stream(data);
+			std::string username; stream >> username;
 			if (p_chat_request_listener != NULL) {
 				p_chat_request_listener->onChatRequest(username);
 			}
@@ -307,50 +315,49 @@ namespace YChat {
 		virtual std::string Identification() const { return identification; }
 
 
-	// --------------------------------------------------------------------------------------------------
-	
+	// -----------------------------------------------------------------------------------------------
 	public :
+
 		class OnProtocolProcessListener : public YChat::OnProtocolProcessListener {
+			
+			typedef void (ClientManager::*response_handler_t) (sid_t, const Octets&);
+
+			struct s_response_handler {
+				method_t method;
+				response_handler_t handler;
+			};
+				
 		public:
 			void onProtocolProcess(Manager* pmanager, sid_t sid, Protocol* pprotocol) {
+				typedef ClientManager CM;
+				/** list below are aligned using SPACE **/
+				static struct s_response_handler response_handlers[] = {
+					{CPMETHOD_LOGIN,        &CM::onLoginRespond          },
+					{CPMETHOD_REGST,        &CM::onRegstRespond          },
+					{CPMETHOD_FRND_LST,     &CM::onRcvFriendList         },
+					{CPMETHOD_FRND_ADD,     &CM::onAddFriendRespond      },
+					{CPMETHOD_FRND_DEL,     &CM::onDelFriendRespond      },
+					{CPMETHOD_FRND_REQ,     &CM::onRcvFrndreqList        },
+					{CPMETHOD_FRND_ACC,     &CM::onAccFrndreqRespond     },
+					{CPMETHOD_LMSG_LST,     &CM::onRcvMessageList        },
+					{CPMETHOD_LEAV_MSG,     &CM::onLeaveMessageRespond   },
+					{CPMETHOD_LMSG_CLR,     &CM::onClearMessagesRespond  },
+					{CPMETHOD_CHAT_WITH,    &CM::onChatWithRespond       },
+					{CPMETHOD_CHAT_RQST,    &CM::onChatRequest           },    // a request handler
+				};
+				
 				ClientManager* client_manager = (ClientManager*) pmanager;
 				ControlProtocol* control_protocol = (ControlProtocol*) pprotocol;
 
-				std::string method = control_protocol->getMethod();
-				OctetsStream content_stream(control_protocol->getContent());
-				if (method == CPMETHOD_LOGIN) {
-					int login_status; content_stream >> login_status;
-					client_manager->onLoginRespond(sid, login_status);
-				} else if (method == CPMETHOD_REGST) {
-					int regst_status; content_stream >> regst_status;
-					client_manager->onRegstRespond(sid, regst_status);
-				} else if (method == CPMETHOD_CHAT_WITH) {
-					int chat_with_status; content_stream >> chat_with_status;
-					client_manager->onChatWithRespond(sid, chat_with_status);
-				} else if (method == CPMETHOD_CHAT_RQST) {
-					std::string username; content_stream >> username;
-					client_manager->onChatRequest(sid, username);
-				} else if (method == CPMETHOD_FRND_LST) {
-					client_manager->onRecvFriendList(sid, content_stream);
-				} else if (method == CPMETHOD_FRND_ADD) {
-					int add_frnd_status; content_stream >> add_frnd_status;
-					client_manager->onAddFriendRespond(sid, add_frnd_status);
-				} else if (method == CPMETHOD_FRND_DEL) {
-					int del_frnd_status; content_stream >> del_frnd_status;
-					client_manager->onDelFriendRespond(sid, del_frnd_status);
-				} else if (method == CPMETHOD_FRND_REQ) {
-					client_manager->onRecvFrndreqList(sid, content_stream);
-				} else if (method == CPMETHOD_FRND_ACC) {
-					int status; content_stream >> status;
-					client_manager->onAccFrndreqRespond(sid, status);	
-				} else if (method == CPMETHOD_LMSG_LST) {
-					client_manager->onRecvMessageList(sid, content_stream);
-				} else if (method == CPMETHOD_LMSG_CLR) {
-					int status; content_stream >> status;
-					client_manager->onClearMessagesRespond(sid, status);
-				} else if (method == CPMETHOD_LEAV_MSG) {
-					int status; content_stream >> status;
-					client_manager->onLeaveMessageRespond(sid, status);
+				method_t method = control_protocol->getMethod();
+				//OctetsStream content_stream(control_protocol->getContent());
+				int n_handlers = sizeof(response_handlers) / sizeof(s_response_handler);
+				for (int i = 0; i < n_handlers; i++) {  // linear search
+					if (method == response_handlers[i].method) {
+						const Octets& content = control_protocol->getContent();
+						(client_manager->*response_handlers[i].handler)(sid, content);
+						break;
+					}
 				}
 			}	
 		};
@@ -360,7 +367,9 @@ namespace YChat {
 			std::vector<std::string>& _messages;
 			Mutex& _messages_mutex;
 		public:
-			OnMessageReceiveListener(const std::string& username, std::vector<std::string>& messages, Mutex& messages_mutex) 
+			OnMessageReceiveListener(
+				const std::string& username, 
+				std::vector<std::string>& messages, Mutex& messages_mutex) 
 				: _username(username), _messages(messages), _messages_mutex(messages_mutex) { }
 	
 			void onMessageReceive(const std::string& username, const std::string& message) {

@@ -28,9 +28,9 @@ namespace YChat {
 			this->content = content;
 		}
 
-		std::string getMethod() const { 
+		method_t getMethod() const { 
 			OctetsStream method_os(method);
-			std::string method_name;
+			method_t method_name;
 			method_os >> method_name;
 			return method_name;
 		}
