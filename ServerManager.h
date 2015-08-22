@@ -388,7 +388,6 @@ namespace YChat {
 			};
 			static session_state_t state("", _state, sizeof(_state)/sizeof(Protocol::Type), 5);
 			return &state;
-
 	   	} 
 		virtual std::string Identification() const { return identification; }
 
