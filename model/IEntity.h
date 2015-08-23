@@ -6,11 +6,12 @@
 namespace YChat {
 	class IEntity {
 	public:
+		virtual ~IEntity() { }
 		//explicit IEntity(int) { }
 		//explicit IEntity(const std::string&) { }
 		virtual std::string toString() const = 0;
 		//virtual bool isNull() const = 0;
-
+		
 /*
 		template <class Entity>
 		static Entity parse(const std::string&, Entity* pent = NULL);
