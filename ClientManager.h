@@ -69,7 +69,7 @@ namespace YChat {
 			control_message->Destroy();
 		}
 
-        int extractStatus(const Octets& octets) const {
+        	int extractStatus(const Octets& octets) const {
 			OctetsStream stream(octets);
 			int status; stream >> status;
 			return status;
