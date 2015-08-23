@@ -18,7 +18,7 @@ void _chmod (int mode) {
 	if (_mode == 0 && mode == 1) { 
 		tcgetattr(STDIN_FILENO, &oldt);
 		newt = oldt;
-		newt.c_lmode &= ~( ICANON | ECHO );
+		newt.c_lflag &= ~( ICANON | ECHO );
 		tcsetattr(STDIN_FILENO, TCSANOW, &newt);
 		_mode = 1;
 	} else if (_mode == 1 && mode == 0) {
