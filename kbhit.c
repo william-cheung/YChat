@@ -6,31 +6,36 @@
 
 #include "kbhit.h"
 
-static int _flag = 0;
+// ----------------------------------------------------------------------------
 
-void _chmod (int flag) {
+/**  file scope variables  **/
+static int _mode = 0;
+
+// ----------------------------------------------------------------------------
+
+void _chmod (int mode) {
 	static struct termios oldt, newt;
-	if (_flag == 0 && flag == 1) { 
+	if (_mode == 0 && mode == 1) { 
 		tcgetattr(STDIN_FILENO, &oldt);
 		newt = oldt;
-		newt.c_lflag &= ~( ICANON | ECHO );
+		newt.c_lmode &= ~( ICANON | ECHO );
 		tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-		_flag = 1;
-	} else if (_flag == 1 && flag == 0) {
+		_mode = 1;
+	} else if (_mode == 1 && mode == 0) {
 		tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-		_flag = 0;
+		_mode = 0;
 	}
 }
 
 int _rdmod (void) {
-	return _flag;
+	return _mode;
 }
 
 int _kbhit (void) {
 	struct timeval tv;
 	fd_set rdfs;
 	
-	if (_flag == 0) return 1;
+	if (_mode == 0) return 1;
 
 	tv.tv_sec = 0, tv.tv_usec = 0;
 
@@ -53,3 +58,5 @@ int _kbhit (void) {
 int _getch (void) {
 	return getchar();
 }
+
+// ----------------------------------------------------------------------------
