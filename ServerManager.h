@@ -19,10 +19,10 @@ namespace YChat {
 
 	class ServerManager : public YChatManager {
 
-		typedef std::map<std::string, sid_t> 	SessionMap;
-		typedef std::map<sid_t, std::string> 	UserNameMap;
-		typedef std::map<sid_t, int>		ChatRequestStateMap;
-		typedef std::map<sid_t, sid_t>		ChatPairMap;
+		typedef std::map<std::string, sid_t>    SessionMap;
+		typedef std::map<sid_t, std::string>    UserNameMap;
+		typedef std::map<sid_t, int>            ChatRequestStateMap;
+		typedef std::map<sid_t, sid_t>          ChatPairMap;
 
 		std::string identification;
 
@@ -40,7 +40,8 @@ namespace YChat {
 
 	public:
 
-		ServerManager(const std::string& id_str) : identification(id_str), database(YChatDB::getInstance()) { }
+		ServerManager(const std::string& id_str) : identification(id_str), 
+			database(YChatDB::getInstance()) { }
 
 		void releaseResources() {
 			YChatDB::delInstance();
