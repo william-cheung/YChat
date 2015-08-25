@@ -13,16 +13,19 @@
 #include "Listeners.h"
 #include "YChatDB.h"
 
+#include "LRUCache.h"
+
 namespace YChat {
 
 	using namespace GNET::Thread;
 
 	class ServerManager : public YChatManager {
 
-		typedef std::map<std::string, sid_t>    SessionMap;
-		typedef std::map<sid_t, std::string>    UserNameMap;
-		typedef std::map<sid_t, int>            ChatRequestStateMap;
-		typedef std::map<sid_t, sid_t>          ChatPairMap;
+		typedef std::map<std::string, sid_t> 	SessionMap;
+		typedef std::map<sid_t, std::string> 	UserNameMap;
+		typedef LRUCache<std::string, uid_t, 0> UidMap;
+		typedef std::map<sid_t, int>		 	ChatRequestStateMap;
+		typedef std::map<sid_t, sid_t>			ChatPairMap;
 
 		std::string identification;
 
@@ -31,6 +34,10 @@ namespace YChat {
 		Mutex user_tracker_mutex;
 		SessionMap 	session_map;
 		UserNameMap	username_map;
+	
+#define MAX_LRU_CACHE_SIZE 10000000 // 10M, this should be configured in .conf file
+		const int max_uidmap_size;
+		UidMap uid_map;
 
 		Mutex chat_request_sids_mutex;
 		std::set<sid_t> chat_request_sids;
@@ -41,7 +48,8 @@ namespace YChat {
 	public:
 
 		ServerManager(const std::string& id_str) : identification(id_str), 
-			database(YChatDB::getInstance()) { }
+			database(YChatDB::getInstance()), 
+			max_uidmap_size(10000000), uid_map(max_uidmap_size) { }
 
 		void releaseResources() {
 			YChatDB::delInstance();
@@ -61,6 +69,18 @@ namespace YChat {
 			return "";
 		}
 
+		void addUserInUidMap(const std::string& username, uid_t uid) {
+			uid_map.set(username, uid);
+		}
+
+		uid_t getUidByName(const std::string& username) {
+			uid_t uid = uid_map.get(username);
+			if (uid != 0) return uid;
+			uid = database->getUidByName(username);
+			if (uid != 0) addUserInUidMap(username, uid);
+			return uid;
+		}
+
 		void sendControlProtocol(sid_t sid, const std::string& method, const Octets& content) {
 			ControlProtocol* control_message = (ControlProtocol*) Protocol::Create(PROTOCOL_CONTROL);
 			control_message->setup(method, content);
@@ -78,7 +98,7 @@ namespace YChat {
 			printf("login request : %s %s\n", username.c_str(), password.c_str());
 
 			int login_status;
-			uid_t uid = database->getUidByName(username);
+			uid_t uid = getUidByName(username);
 			if (uid != 0) {
 				std::string password_ = database->getPassword(username);
 				if (password != password_) login_status = YCHAT_PAS_INVAL;
@@ -106,11 +126,12 @@ namespace YChat {
 			printf("regst request : %s %s\n", username.c_str(), password.c_str());
 
 			int regst_status;
-			uid_t uid = database->getUidByName(username);
+			uid_t uid = getUidByName(username);
 			if (uid != 0) regst_status = YCHAT_USR_EXIST;
 			else {
-				if (database->addUser(username, password)) {
+				if (uid = database->addUser(username, password)) {
 					printf("add user %s succeeded !\n", username.c_str());
+					addUserInUidMap(username, uid);
 					Mutex::Scoped mtx(user_tracker_mutex);
 					session_map[username] = sid;
 					username_map[sid] = username;
@@ -118,7 +139,7 @@ namespace YChat {
 				} else regst_status = YCHAT_SVR_ERROR;
 			}
 
-			printf("%s : uid : %d\n", username.c_str(), database->getUidByName(username));
+			printf("%s : uid : %d\n", username.c_str(), getUidByName(username));
 
 			sendControlProtocol(sid, CPMETHOD_REGST, regst_status);
 		}
@@ -131,7 +152,7 @@ namespace YChat {
 			std::vector<User> friends;
 			
 			if ((username = getUserNameBySid(sid)) == "" 
-					|| (uid = database->getUidByName(username)) == 0 
+					|| (uid = getUidByName(username)) == 0 
 					|| !database->getFriends(uid, friends))
 				get_friends_status = YCHAT_SVR_ERROR; 
 			
@@ -155,8 +176,8 @@ namespace YChat {
 			uid_t uid = 0, fuid = 0;
 			int status = YCHAT_OK;
 			if (src_username == "") status = YCHAT_SVR_ERROR;
-			else if ((uid = database->getUidByName(src_username)) == 0) status = YCHAT_SVR_ERROR;
-			else if ((fuid = database->getUidByName(username)) == 0) status = YCHAT_USR_INVAL;
+			else if ((uid = getUidByName(src_username)) == 0) status = YCHAT_SVR_ERROR;
+			else if ((fuid = getUidByName(username)) == 0) status = YCHAT_USR_INVAL;
 			else if (uid == fuid || database->hasFriend(uid, fuid)) status = YCHAT_USR_INVAL;
 			else if (!database->addFriend(uid, src_username, fuid, username)) status = YCHAT_SVR_ERROR;
 			sendControlProtocol(sid, CPMETHOD_FRND_ADD, status);
@@ -169,8 +190,8 @@ namespace YChat {
 			uid_t uid = 0, fuid = 0;
 			int status = YCHAT_OK;
 			if (src_username == "") status = YCHAT_SVR_ERROR;
-			else if ((uid = database->getUidByName(src_username)) == 0) status = YCHAT_SVR_ERROR;
-			else if ((fuid = database->getUidByName(username)) == 0) status = YCHAT_USR_INVAL;
+			else if ((uid = getUidByName(src_username)) == 0) status = YCHAT_SVR_ERROR;
+			else if ((fuid = getUidByName(username)) == 0) status = YCHAT_USR_INVAL;
 			else if (!database->hasFriend(uid, fuid)) status = YCHAT_USR_INVAL;
 			else if (database->delFriend(uid, fuid)) { 
 				printf("%s delete friend succeeded\n", src_username.c_str());
@@ -185,7 +206,7 @@ namespace YChat {
 			uid_t uid = 0;
 			std::vector<FriendRequest> requests;
 			if ((username = getUserNameBySid(sid)) == ""
-					|| (uid = database->getUidByName(username)) == 0
+					|| (uid = getUidByName(username)) == 0
 					|| !database->getFrndreqs(uid, requests))
 				status = YCHAT_SVR_ERROR;
 
@@ -206,7 +227,7 @@ namespace YChat {
 			uid_t uid = 0, req_uid = 0;
 			int status = YCHAT_OK;
 			if (snd_username == "") status = YCHAT_SVR_ERROR;
-			else if ((uid = database->getUidByName(snd_username)) == 0)
+			else if ((uid = getUidByName(snd_username)) == 0)
 				status = YCHAT_SVR_ERROR;
 			else if ((req_uid = database->hasFrndreq(uid, username)) == 0
 					|| database->hasFriend(uid, req_uid)) {
@@ -224,7 +245,7 @@ namespace YChat {
 			uid_t uid = 0;
 			std::vector<Message> messages;
 			if ((username = getUserNameBySid(sid)) == "" 
-					|| (uid = database->getUidByName(username)) == 0
+					|| (uid = getUidByName(username)) == 0
 					|| !database->getMessages(uid, messages)) 
 				status = YCHAT_SVR_ERROR;
 
@@ -249,7 +270,7 @@ namespace YChat {
 			std::string username; 
 			uid_t uid = 0;
 			if ((username = getUserNameBySid(sid)) == "" 
-					|| (uid = database->getUidByName(username)) == 0) {
+					|| (uid = getUidByName(username)) == 0) {
 				status = YCHAT_SVR_ERROR;
 				// printf("username : %s, uid : %d\n", username.c_str(), uid);
 				printf("server internal error in ServerManager::onClearMessages()\n");
@@ -266,9 +287,9 @@ namespace YChat {
 			std::string snd_username, rcv_username(username);
 			uid_t snd_uid = 0, rcv_uid = 0;
 			if ((snd_username = getUserNameBySid(sid)) == "" 
-					|| (snd_uid = database->getUidByName(snd_username)) == 0)
+					|| (snd_uid = getUidByName(snd_username)) == 0)
 				status = YCHAT_SVR_ERROR;
-			else if ((rcv_uid = database->getUidByName(rcv_username)) == 0) 
+			else if ((rcv_uid = getUidByName(rcv_username)) == 0) 
 				status = YCHAT_USR_INVAL;
 			else if(!database->addMessage(rcv_uid, Message(snd_username, time(NULL), message))) 
 				status = YCHAT_SVR_ERROR;
@@ -293,9 +314,9 @@ namespace YChat {
 		
 			int status = YCHAT_USR_AVAILABLE;
 			int uid = 0, fuid = 0;
-			if ((uid = database->getUidByName(src_username)) == 0) {
+			if ((uid = getUidByName(src_username)) == 0) {
 				status = YCHAT_SVR_ERROR;
-			} else if ((fuid = database->getUidByName(username)) == 0) {
+			} else if ((fuid = getUidByName(username)) == 0) {
 				status = YCHAT_USR_INVAL;
 			} else if (!database->hasFriend(uid, fuid)) {
 				status = YCHAT_USR_NOTFRIEND;
@@ -389,6 +410,7 @@ namespace YChat {
 			};
 			static session_state_t state("", _state, sizeof(_state)/sizeof(Protocol::Type), 5);
 			return &state;
+
 	   	} 
 		virtual std::string Identification() const { return identification; }
 
@@ -400,7 +422,7 @@ namespace YChat {
 				ServerManager* server_manager = (ServerManager*)pmanager;
 				ControlProtocol* control_protocol = (ControlProtocol*) pprotocol;
 
-				std::string method = control_protocol->getMethod();
+				method_t method = control_protocol->getMethod();
 				OctetsStream content_stream(control_protocol->getContent());
 				if (method == CPMETHOD_LOGIN) {
 					std::string username, password;
