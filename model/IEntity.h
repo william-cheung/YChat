@@ -20,6 +20,17 @@ namespace YChat {
 		static std::string toString(const Entity& entity);
 */
 	};
+	
+	template<typename Entity>
+	class __InternalIEntity : public IEntity {
+		Entity (*_parse)(const std::string&);
+		std::string (*_toString)(const Entity& entity);
+	public: 
+		__InternalIEntity() {
+			_parse = &Entity::parse;
+			_toString = &Entity::toString;
+		}
+	};
 };
 
 #endif // IEntity.h

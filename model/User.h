@@ -9,7 +9,7 @@
 
 namespace YChat {
 
-	class User : public IEntity {
+	class User : public __InternalIEntity<User> {
 		uid_t uid;
 		std::string user_name;
 //		std::vector<Friend> friend_list;
